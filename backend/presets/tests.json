@@ -1,0 +1,25 @@
+{
+  "tests": [
+    {
+      "name": "Get presets list",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Create new preset",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "name": "Test Preset",
+        "description": "Test description",
+        "category": "Профессиональные",
+        "price": 990,
+        "preset_file_url": "https://example.com/preset.cube",
+        "is_active": true,
+        "sort_order": 0
+      },
+      "expectedStatus": 201
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
 
@@ -7,17 +7,50 @@ interface PhoneDemoProps {
   remainingProcesses: number;
 }
 
+interface Preset {
+  id: number;
+  name: string;
+  category: string;
+  preset_file_url: string;
+}
+
 const PhoneDemo = ({ onProcessComplete, remainingProcesses }: PhoneDemoProps) => {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [processedImage, setProcessedImage] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
+  const [selectedPresetId, setSelectedPresetId] = useState<number | null>(null);
+  const [presets, setPresets] = useState<Preset[]>([]);
 
-  const styles = [
-    { id: 'cinematic', name: 'Cinematic', icon: 'Film', gradient: 'from-purple-500 to-pink-500' },
-    { id: 'vintage', name: 'Vintage', icon: 'Camera', gradient: 'from-amber-500 to-orange-500' },
-    { id: 'moody', name: 'Moody', icon: 'Moon', gradient: 'from-blue-500 to-indigo-500' },
-  ];
+  useEffect(() => {
+    loadPresets();
+  }, []);
+
+  const loadPresets = async () => {
+    try {
+      const response = await fetch('https://functions.poehali.dev/cc2dd51e-b8c1-4664-b8d1-c08b95436f04');
+      if (response.ok) {
+        const data = await response.json();
+        const activePresets = (data.presets || []).filter((p: any) => p.is_active).slice(0, 3);
+        setPresets(activePresets);
+      }
+    } catch (error) {
+      console.error('Failed to load presets:', error);
+    }
+  };
+
+  const getPresetGradient = (index: number) => {
+    const gradients = [
+      'from-purple-500 to-pink-500',
+      'from-amber-500 to-orange-500',
+      'from-blue-500 to-indigo-500',
+    ];
+    return gradients[index % gradients.length];
+  };
+
+  const getPresetIcon = (index: number) => {
+    const icons = ['Film', 'Camera', 'Moon'];
+    return icons[index % icons.length];
+  };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -26,14 +59,14 @@ const PhoneDemo = ({ onProcessComplete, remainingProcesses }: PhoneDemoProps) =>
       reader.onload = (event) => {
         setUploadedImage(event.target?.result as string);
         setProcessedImage(null);
-        setSelectedStyle(null);
+        setSelectedPresetId(null);
       };
       reader.readAsDataURL(file);
     }
   };
 
   const handleProcess = () => {
-    if (!selectedStyle || !uploadedImage || remainingProcesses <= 0) return;
+    if (!selectedPresetId || !uploadedImage || remainingProcesses <= 0) return;
     
     setIsProcessing(true);
     setTimeout(() => {
@@ -48,7 +81,7 @@ const PhoneDemo = ({ onProcessComplete, remainingProcesses }: PhoneDemoProps) =>
   const handleReset = () => {
     setUploadedImage(null);
     setProcessedImage(null);
-    setSelectedStyle(null);
+    setSelectedPresetId(null);
     setIsProcessing(false);
   };
 
@@ -108,16 +141,16 @@ const PhoneDemo = ({ onProcessComplete, remainingProcesses }: PhoneDemoProps) =>
                 <div>
                   <h4 className="font-semibold mb-3">Выбери стиль</h4>
                   <div className="grid grid-cols-3 gap-2">
-                    {styles.map((style) => (
+                    {presets.map((preset, index) => (
                       <button
-                        key={style.id}
-                        onClick={() => setSelectedStyle(style.id)}
-                        className={`p-3 rounded-xl bg-gradient-to-br ${style.gradient} hover:scale-105 transition-transform duration-200 text-white text-xs font-medium flex flex-col items-center gap-1 ${
-                          selectedStyle === style.id ? 'ring-2 ring-white ring-offset-2 ring-offset-background' : ''
+                        key={preset.id}
+                        onClick={() => setSelectedPresetId(preset.id)}
+                        className={`p-3 rounded-xl bg-gradient-to-br ${getPresetGradient(index)} hover:scale-105 transition-transform duration-200 text-white text-xs font-medium flex flex-col items-center gap-1 ${
+                          selectedPresetId === preset.id ? 'ring-2 ring-white ring-offset-2 ring-offset-background' : ''
                         }`}
                       >
-                        <Icon name={style.icon as any} size={20} />
-                        <span>{style.name}</span>
+                        <Icon name={getPresetIcon(index) as any} size={20} />
+                        <span>{preset.name}</span>
                       </button>
                     ))}
                   </div>
@@ -125,7 +158,7 @@ const PhoneDemo = ({ onProcessComplete, remainingProcesses }: PhoneDemoProps) =>
 
                 <Button
                   onClick={handleProcess}
-                  disabled={!selectedStyle || isProcessing || remainingProcesses <= 0}
+                  disabled={!selectedPresetId || isProcessing || remainingProcesses <= 0}
                   className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90 disabled:opacity-50"
                 >
                   {isProcessing ? (
@@ -157,7 +190,7 @@ const PhoneDemo = ({ onProcessComplete, remainingProcesses }: PhoneDemoProps) =>
                 <div className="bg-card/50 rounded-xl p-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Стиль:</span>
-                    <span className="font-semibold capitalize">{selectedStyle}</span>
+                    <span className="font-semibold capitalize">{presets.find(p => p.id === selectedPresetId)?.name}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Осталось:</span>
