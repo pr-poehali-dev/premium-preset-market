@@ -3,9 +3,15 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Icon from '@/components/ui/icon';
+import PhoneDemo from '@/components/PhoneDemo';
 
 const Index = () => {
   const [activeSection, setActiveSection] = useState('home');
+  const [remainingProcesses, setRemainingProcesses] = useState(3);
+
+  const handleProcessComplete = () => {
+    setRemainingProcesses(prev => Math.max(0, prev - 1));
+  };
 
   const presets = [
     { id: 1, name: 'Cinematic', price: '₽990', category: 'Профессиональные', description: 'Кинематографичные цвета и драматичный контраст' },
@@ -77,13 +83,19 @@ const Index = () => {
                 </Button>
               </div>
             </div>
-            <div className="relative animate-scale-in">
-              <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-secondary/30 blur-3xl rounded-full"></div>
-              <img 
-                src="https://images.unsplash.com/photo-1513721032312-6a18a42c8763"
-                alt="Hero"
-                className="relative rounded-2xl shadow-2xl"
+            <div className="relative">
+              <PhoneDemo 
+                remainingProcesses={remainingProcesses}
+                onProcessComplete={handleProcessComplete}
               />
+              <div className="mt-6 text-center">
+                <div className="inline-flex items-center gap-2 bg-card/50 backdrop-blur-sm px-4 py-2 rounded-full border border-border">
+                  <Icon name="Gift" size={16} className="text-primary" />
+                  <span className="text-sm font-medium">
+                    {remainingProcesses > 0 ? `${remainingProcesses} бесплатных обработки` : 'Бесплатные закончились'}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
